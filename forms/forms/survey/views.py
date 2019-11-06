@@ -1,5 +1,5 @@
-from django.contrib.auth import login, authenticate,forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login, authenticate,forms, update_session_auth_hash
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.shortcuts import render, redirect
 
 #login_required
@@ -19,3 +19,16 @@ def signup(request):
         login(request,user)
         return redirect('login')
     return render(request, 'registration/signup.html', {'form': form})
+
+def password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            return redirect('home')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'registration/password.html', {
+        'form': form
+    })

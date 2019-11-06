@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^logout/$', views.LogoutView.as_view(), name='logout'),
     url(r'^signup/$', survey_views.signup, name='signup'),
     url(r'^home/$', survey_views.home, name='home'),
+    url(r'^password/$', survey_views.password, name='password'),
 ]
