@@ -23,7 +23,7 @@ class Template_question(models.Model):
 		return self.question
 
 class Line(Template_question):
-	pass
+	question_valid = models.IntegerField()
 
 class Para(Template_question):
 	pass
@@ -44,7 +44,7 @@ class Drop(Template_question):
 	pass
 
 class File(Template_question):
-	pass
+	question_valid = models.IntegerField()
 
 class Template_option(models.Model):
 	option = models.TextField()

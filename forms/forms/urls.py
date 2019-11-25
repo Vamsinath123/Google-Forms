@@ -13,9 +13,11 @@ urlpatterns = [
     url(r'^signup/$', survey_views.signup, name='signup'),
     url(r'^home/$', survey_views.home, name='home'),
     url(r'^password/$', survey_views.password, name='password'),
-	url(r'^createform/', survey_views.create, name="createform"),    
-	url(r'^formlist/', survey_views.formlist, name= "formlist"),
+	  url(r'^createform/', survey_views.create, name="createform"),    
+	  url(r'^formlist/', survey_views.formlist, name= "formlist"),
    	path('displayform/<pk>', survey_views.displayform, name="displayform"),
    	path('answer/<pk>', survey_views.answer, name="answer"),
+    path('question/<pk>',survey_views.question, name="question"),
+    
 ]
 

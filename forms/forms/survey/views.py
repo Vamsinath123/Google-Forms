@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.urls import reverse
 from . import models
+from scipy import stats
+import numpy as np
 #login_required
 def main(request):
     return render(request, 'registration/main.html',{})
@@ -44,6 +46,7 @@ def password(request):
 def create(request):
     if request.method == 'POST':
         dictionary = request.POST
+        print(dictionary)
         form = models.Survey()
         form.title = dictionary.get('title')
         form.owner = request.user
@@ -53,9 +56,10 @@ def create(request):
             if len(lst) == 2:
                 if lst[1] == "1":
                     question = models.Line()
-                    question.question_number = lst[0]
+                    question.question_number = lst[0].split('@')[1]
                     question.question_type = 1
                     question.question = value
+                    question.question_valid = lst[0].split('@')[0]
                     question.form = form 
                     question.save()
                 elif lst[1] == "2":
@@ -88,9 +92,10 @@ def create(request):
                     question.save()
                 elif lst[1] == "6":
                     question = models.File()
-                    question.question_number = lst[0]
+                    question.question_number = lst[0].split('@')[1]
                     question.question_type = 6
                     question.question = value
+                    question.question_valid = lst[0].split('@')[0]
                     question.form = form 
                     question.save()
                 elif lst[1] == "7":
@@ -216,11 +221,12 @@ def answer(request,pk):
                     answer.owner = request.user 
                     answer.save()
                 elif lst[0] == "4":
-                    answer = models.Multi_response()
-                    answer.parent_question = models.Multi.objects.filter(id = lst[1])[0]
-                    answer.parent_option = models.Multi_option.objects.filter(id = value)[0]
-                    answer.owner = request.user 
-                    answer.save()
+                    if(value == "on"):
+                        answer = models.Multi_response()
+                        answer.parent_question = models.Multi.objects.filter(id = lst[1].split('#')[0])[0]
+                        answer.parent_option = models.Multi_option.objects.filter(id = lst[1].split('#')[1])[0]
+                        answer.owner = request.user 
+                        answer.save()
                 elif lst[0] == "5":
                     answer = models.Drop_response()
                     answer.parent_question = models.Drop.objects.filter(id = lst[1])[0]
@@ -251,3 +257,37 @@ def answer(request,pk):
         return redirect('home')
     return render(request,"answer.html", {"mylist": mylist, "form": myform})
 
+def question(request,pk):
+    if request.method == 'POST':
+        m1=0
+        m2=0
+        m3=0
+        dictionary = request.POST
+        check = 0
+        #print(dictionary)
+        myform = models.Survey.objects.get(pk=pk)
+        #print(myform)
+        for key,value in dictionary.items():
+            q = key.split('_')
+            if len(q)==2:
+                lst_1 = list(models.Line_response.objects.filter(parent_question__question_number = value, parent_question__form = myform, parent_question__question_valid = '2'))
+                
+                lst_1= [int(x.answer) for x in lst_1]
+                if len(lst_1)>0:
+                    check =1
+                    print(check)
+                    a =np.array(lst_1)
+                    m1 = np.mean(a)
+                    m2 = np.median(a)
+                    m3 = stats.mode(a)
+                    m4 = m3[0]
+                    print(m4)
+                a_lst = list(models.Single_response.objects.filter(parent_question__question_number = value)) +list(models.Multi_response.objects.filter(parent_question__question_number = value))+ list(models.Drop_response.objects.filter(parent_question__question_number=value))
+                #print(a_lst)
+                o_lst = list(models.Single_option.objects.filter(template__question_number =value,template__form = myform)) +list(models.Multi_option.objects.filter(template__question_number =value,template__form = myform))+ list(models.Drop_option.objects.filter(template__question_number =value,template__form = myform))
+                #print(o_lst)
+                lst2 = [i.option_number for i in o_lst]
+                lst1 = [i.parent_option.option_number for i in a_lst]
+                lst5 = [[i,lst1.count(i)] for i in lst2]
+        return render(request,"visualize.html",{"lst":lst5,"mean":m1,"median":m2,"mode":m4,"checkno":check})
+    return render(request,"question.html", {})
